@@ -230,13 +230,17 @@ with st.expander("🔍 各機器の役割をもっと詳しく"):
 st.divider()
 
 # ----------------------------------------------------------------------
-# ネットワークマップ表示エリア
+# ネットワークマップ表示エリア（＋印刷ボタン）
+# マップを見ながらそのままボタンを押せるよう、同じセクションにまとめる
 # ----------------------------------------------------------------------
-st.subheader("② ネットワークマップ")
+st.subheader("② ネットワークマップで送信してみよう")
 svg_placeholder = st.empty()
 status_placeholder = st.empty()
 svg_placeholder.markdown(build_svg(path_nodes, None, 0.0), unsafe_allow_html=True)
-status_placeholder.info("下の「🖨️ 印刷する」ボタンを押すと、データが通るルートがアニメーションで表示されます。")
+status_placeholder.info("マップを見ながら、下の「🖨️ 印刷する」ボタンを押してみよう。データが通るルートがアニメーションで表示されます。")
+
+result_placeholder = st.empty()
+print_clicked = st.button("🖨️ 印刷する", type="primary", use_container_width=True)
 
 st.divider()
 
@@ -251,12 +255,12 @@ table_placeholder.dataframe(highlighted_table(), use_container_width=True, hide_
 st.divider()
 
 # ----------------------------------------------------------------------
-# 印刷ボタン & アニメーション
+# 印刷アニメーション本体
 # ----------------------------------------------------------------------
-st.subheader("④ 印刷してみよう")
-result_placeholder = st.empty()
+st.subheader("④ 送信のようす")
+st.caption("ボタンを押すと、上のネットワークマップとこちらの説明が連動して動きます。")
 
-if st.button("🖨️ 印刷する", type="primary", use_container_width=True):
+if print_clicked:
     result_placeholder.empty()
 
     step_messages = {
@@ -288,9 +292,11 @@ if st.button("🖨️ 印刷する", type="primary", use_container_width=True):
         msg = step_messages.get((cur_node, nxt_node), f"{cur_node} から {nxt_node} へ送信中…")
         status_placeholder.markdown(f"<div class='step-box'>{msg}</div>", unsafe_allow_html=True)
 
-        for p in range(0, 101, 5):
-            svg_placeholder.markdown(build_svg(path_nodes, i, p / 100), unsafe_allow_html=True)
-            time.sleep(0.02)
+        SEGMENT_SECONDS = 2.0  # 機器間をパケットが移動する時間
+        FRAMES = 50
+        for f in range(FRAMES + 1):
+            svg_placeholder.markdown(build_svg(path_nodes, i, f / FRAMES), unsafe_allow_html=True)
+            time.sleep(SEGMENT_SECONDS / FRAMES)
 
     svg_placeholder.markdown(build_svg(path_nodes, n_steps, 0.0), unsafe_allow_html=True)
     status_placeholder.empty()
